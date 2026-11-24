@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ru" id="top">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f0e9">
+  <meta name="description" content="Интерактивная аниме-комедия со сценариями вымышленных свиданий.">
+  <title>Сценарии и прайс — Бюро флирта</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="gsap.min.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body data-character="">
+  <a class="skip" href="#content">К содержанию</a>
+  <header class="frame bar">
+    <a class="brand" href="index.html"><span class="seal" aria-hidden="true">♥</span><span>БЮРО<br>ФЛИРТА</span></a>
+    <nav aria-label="Основное меню"><a href="index.html#catalog">Каталог</a><a href="scenarios.html" aria-current="page">Сценарии</a><a href="orders.html">Заказы</a><a href="index.html?view=favorites#catalog">Избранное <span data-favorite-count>0</span></a></nav>
+    <button class="button button-outline quick-order" type="button">Быстрый заказ <span aria-hidden="true">↗</span></button>
+  </header>
+  <main id="content">
+    
+    <section class="frame subpage">
+      <div class="sub-hero">
+        <p class="label">Меню бюро</p><h1>Сценарии и прайс</h1>
+        <p class="lead">Один сюжет, три актёрские версии. Выберите длительность, а затем героя.</p>
+      </div>
+      <div class="scenario-grid">
+        <article class="story-card"><p class="label">30 минут</p><h2>Кофе с подтекстом</h2><p>Первое знакомство за столиком у окна. Обмен репликами, один неожиданный вопрос и выбор финальной фразы.</p></article>
+        <article class="story-card"><p class="label">60 минут</p><h2>Прогулка под неоном</h2><p>Два героя встречаются после закрытия кинотеатра. По дороге они меняют маршрут и решают, кто задаёт тон вечеру.</p></article>
+        <article class="story-card"><p class="label">90 минут</p><h2>Вечер с поворотом сюжета</h2><p>Три сцены. Завязка, неожиданный конверт и финал, в котором можно сменить жанр с драмы на комедию.</p></article>
+      </div>
+      <section class="price-section">
+        <div class="section-top"><h2>Сравнить цены</h2><span class="muted">♥ — игровые сердечки</span></div>
+        <div class="table-wrap">
+          <table><thead><tr><th scope="col">Сценарий</th><th scope="col"><a href="mira.html">Мира</a></th><th scope="col"><a href="luna.html">Луна</a></th><th scope="col"><a href="ren.html">Рэн</a></th></tr></thead><tbody data-price-table></tbody></table>
+        </div>
+      </section>
+      <section class="faq"><h2>Как работает бюро</h2>
+        <details><summary>Что входит в заказ?</summary><p>Бронь персонажа, сценария и условного времени в вашем игровом списке.</p></details>
+        <details><summary>Можно ли отменить или вернуть заказ?</summary><p>Да. Откройте страницу «Заказы» и измените статус нужной брони.</p></details>
+        <details><summary>Что такое сердечки?</summary><p>Условная игровая валюта для сравнения сценариев. Бронирование сохраняется в вашем браузере.</p></details>
+      </section>
+    </section>
+  </main>
+  <footer class="frame footer">
+    <a class="brand" href="index.html"><span class="seal" aria-hidden="true">♥</span><span>БЮРО<br>ФЛИРТА</span></a>
+    <p>Пародийное бюро · вымышленные взрослые персонажи и игровые цены.</p>
+    <a href="#top">Наверх <span aria-hidden="true">↑</span></a>
+  </footer>
+  <div class="mobile-bar" role="group" aria-label="Быстрые действия">
+    <a href="index.html#catalog">Каталог</a><a href="scenarios.html" aria-current="page">Сценарии</a><a href="orders.html">Заказы</a>
+    <button class="quick-order button-pink" type="button">Заказать</button>
+  </div>
+  <dialog id="gallery" aria-labelledby="gallery-title"><div class="dialog-body gallery-body"></div></dialog>
+  <dialog id="order" aria-labelledby="order-title"><div class="dialog-body"></div></dialog>
+  <p class="sr-only" id="announcement" role="status"></p>
+</body>
+</html>

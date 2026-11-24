@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ru" id="top">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f0e9">
+  <meta name="description" content="Интерактивная аниме-комедия со сценариями вымышленных свиданий.">
+  <title>Свидания по сценарию — Бюро флирта</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="gsap.min.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body data-character="">
+  <a class="skip" href="#content">К содержанию</a>
+  <header class="frame bar">
+    <a class="brand" href="index.html"><span class="seal" aria-hidden="true">♥</span><span>БЮРО<br>ФЛИРТА</span></a>
+    <nav aria-label="Основное меню"><a href="index.html#catalog" aria-current="page">Каталог</a><a href="scenarios.html">Сценарии</a><a href="orders.html">Заказы</a><button type="button" class="favorite-toggle" aria-pressed="false">Избранное <span data-favorite-count>0</span></button></nav>
+    <button class="button button-outline quick-order" type="button">Быстрый заказ <span aria-hidden="true">↗</span></button>
+  </header>
+  <main id="content">
+        <section class="frame hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow"><span aria-hidden="true"></span> РОМКОМ ПОСЛЕ ПОЛУНОЧИ</p>
+        <h1 id="hero-title">Свидания<br>по <em>сценарию.</em></h1>
+        <p>Выберите героя и жанр. Остальное — дело драматической паузы.</p>
+        <a href="#catalog" class="button button-pink">Выбрать персонажа <span aria-hidden="true">↓</span></a>
+      </div>
+    </section>
+
+    <section class="frame catalog" id="catalog" aria-labelledby="catalog-title">
+      <div class="section-top">
+        <h2 id="catalog-title">Ночная смена</h2>
+        <a class="orders-link" href="orders.html">Мои заказы <span data-orders-count>0</span> <span aria-hidden="true">↗</span></a>
+      </div>
+      <div class="toolbar">
+        <div class="filter-group" role="group" aria-label="Жанр">
+          <button type="button" data-genre="all" aria-pressed="true">Все</button>
+          <button type="button" data-genre="romance" aria-pressed="false">Романтика</button>
+          <button type="button" data-genre="comedy" aria-pressed="false">Комедия</button>
+          <button type="button" data-genre="drama" aria-pressed="false">Драма</button>
+        </div>
+        <label class="search"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Найти по имени" aria-label="Найти по имени"></label>
+        <button type="button" class="button button-outline favorite-toggle catalog-favorite" aria-pressed="false">Избранное <span data-favorite-count>0</span></button>
+      </div>
+      <div class="cards" id="cards"></div>
+      <div id="empty" class="empty" hidden>
+        <h3 id="empty-title"></h3>
+        <button class="button button-outline" id="clear-filters" type="button">Показать весь состав</button>
+      </div>
+    </section>
+
+  </main>
+  <footer class="frame footer">
+    <a class="brand" href="index.html"><span class="seal" aria-hidden="true">♥</span><span>БЮРО<br>ФЛИРТА</span></a>
+    <p>Пародийное бюро · вымышленные взрослые персонажи и игровые цены.</p>
+    <a href="#top">Наверх <span aria-hidden="true">↑</span></a>
+  </footer>
+  <div class="mobile-bar" role="group" aria-label="Быстрые действия">
+    <a href="index.html#catalog" aria-current="page">Каталог</a><a href="scenarios.html">Сценарии</a><a href="orders.html">Заказы</a>
+    <button class="quick-order button-pink" type="button">Заказать</button>
+  </div>
+  <dialog id="gallery" aria-labelledby="gallery-title"><div class="dialog-body gallery-body"></div></dialog>
+  <dialog id="order" aria-labelledby="order-title"><div class="dialog-body"></div></dialog>
+  <p class="sr-only" id="announcement" role="status"></p>
+</body>
+</html>
