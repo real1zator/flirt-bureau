@@ -8,14 +8,19 @@
       description: "Владеет многозначительным молчанием. Каждый его тост звучит как монолог злодея перед титрами." },
   ];
   const scenarios = [
-    { id: "coffee", title: "Кофе с подтекстом", duration: "30 минут", extra: 0 },
-    { id: "walk", title: "Прогулка под неоном", duration: "60 минут", extra: 4 },
-    { id: "plot", title: "Вечер с поворотом сюжета", duration: "90 минут", extra: 8 },
+    { id: "coffee", title: "Кофе с подтекстом", duration: "30 минут", extra: 0, hero: "mira",
+      description: "Столик у окна, неожиданный вопрос и право выбрать последнюю реплику." },
+    { id: "walk", title: "Прогулка под неоном", duration: "60 минут", extra: 4, hero: "luna",
+      description: "Закрытый кинотеатр, дождь и маршрут, который вы меняете по ходу сюжета." },
+    { id: "plot", title: "Вечер с поворотом сюжета", duration: "90 минут", extra: 8, hero: "ren",
+      description: "Завязка, загадочный конверт и финал, в котором можно сменить жанр." },
   ];
   const slots = { evening: "Сегодня вечером", tomorrow: "Завтра вечером", credits: "После титров" };
   const motion = matchMedia("(prefers-reduced-motion: reduce)");
   const gallery = document.querySelector("#gallery");
   const order = document.querySelector("#order");
+  const cartDialog = document.querySelector("#cart");
+  const featureStage = document.querySelector(".feature-stage");
   const cards = document.querySelector("#cards");
   const search = document.querySelector("#search");
   const empty = document.querySelector("#empty");
@@ -31,25 +36,44 @@
     try { return JSON.parse(localStorage.getItem(storageKey)) || {}; }
     catch { return {}; }
   }
-  const saved = oldState();
-  const favorites = new Set(Array.isArray(saved.favorites) ? saved.favorites.filter(byId) : []);
-  const photos = Object.fromEntries(cast.map(({ id }) => [id, saved.photos?.[id] === 1 ? 1 : 0]));
-  const orders = Array.isArray(saved.orders) ? saved.orders.filter((item) =>
-    item && byId(item.character) && scenarioById(item.scenario) && Object.hasOwn(slots, item.slot)).slice(0, 20) : [];
+  function readBookings(items, limit) {
+    return Array.isArray(items) ? items.filter((item) =>
+      item && byId(item.character) && scenarioById(item.scenario) && Object.hasOwn(slots, item.slot)).slice(0, limit) : [];
+  }
+  const favorites = new Set();
+  const photos = {};
+  let orders = [];
+  let cart = [];
   let genre = "all";
   let onlyFavorites = new URLSearchParams(location.search).get("view") === "favorites";
   let galleryCharacter = null;
   let galleryCover = 0;
+  let featureCut = null;
+  load();
 
   function byProfile() {
     return cast.find((character) => character.id === document.body.dataset.character);
   }
 
-  function save() {
-    try { localStorage.setItem(storageKey, JSON.stringify({ favorites: [...favorites], photos, orders })); }
-    catch { /* Состояние доступно до закрытия страницы. */ }
+  function load() {
+    const saved = oldState();
+    favorites.clear();
+    (Array.isArray(saved.favorites) ? saved.favorites : []).filter(byId).forEach((id) => favorites.add(id));
+    for (const { id } of cast) photos[id] = saved.photos?.[id] === 1 ? 1 : 0;
+    orders = readBookings(saved.orders, 20);
+    cart = readBookings(saved.cart, 12);
+  }
+
+  function updateCounts() {
     document.querySelectorAll("[data-favorite-count]").forEach((node) => { node.textContent = favorites.size; });
     document.querySelectorAll("[data-orders-count]").forEach((node) => { node.textContent = orders.length; });
+    document.querySelectorAll("[data-cart-count]").forEach((node) => { node.textContent = cart.length; });
+  }
+
+  function save() {
+    try { localStorage.setItem(storageKey, JSON.stringify({ favorites: [...favorites], photos, orders, cart })); }
+    catch { /* Состояние доступно до закрытия страницы. */ }
+    updateCounts();
   }
 
   function imagePosition(character, photo) {
@@ -71,10 +95,10 @@
       (genre === "all" || genre === person.genre) &&
       person.name.toLocaleLowerCase("ru").includes(query));
     cards.innerHTML = visible.map((person) => `
-      <article class="character">
+      <article class="character ${person.id === "mira" ? "featured-character" : ""}" data-tone="${person.genre}">
         <div class="portrait-area">
           <button type="button" class="portrait" data-gallery="${person.id}" style="${imagePosition(person, photos[person.id])}"
-                  aria-label="Галерея · ${person.name}"><span class="photo-count" aria-hidden="true">2 фото ↗</span></button>
+                  aria-label="Галерея · ${person.name}"><span class="photo-count" aria-hidden="true">2 фото</span></button>
           <button type="button" class="favorite" data-favorite="${person.id}"></button>
         </div>
         <div class="card-copy">
@@ -91,7 +115,51 @@
     document.querySelectorAll(".favorite-toggle").forEach((button) => button.setAttribute("aria-pressed", String(onlyFavorites)));
     empty.hidden = visible.length > 0;
     document.querySelector("#empty-title").textContent = onlyFavorites && favorites.size === 0 ? "Избранное пока пусто" : "По этому запросу никого нет";
-    document.querySelector("#catalog-title").textContent = onlyFavorites ? "Избранное" : "Ночная смена";
+    document.querySelector("#catalog-title").textContent = onlyFavorites ? "Избранное" : "Герои вечера";
+  }
+
+  function renderProducts() {
+    const cheapestRate = Math.min(...cast.map((person) => person.rate));
+    for (const target of document.querySelectorAll("[data-products]")) {
+      target.innerHTML = scenarios.map((scenario, index) => `<article class="product">
+        <div class="product-art" aria-hidden="true" style="--scene-x:${index * 50}%"></div>
+        <div class="product-copy">
+          <div class="product-meta"><span>${scenario.duration}</span><span>от ${points(cheapestRate + scenario.extra)}</span></div>
+          <h3>${scenario.title}</h3><p>${scenario.description}</p>
+          <button type="button" class="button button-pink" data-book="${scenario.hero}" data-scenario="${scenario.id}">Выбрать <span aria-hidden="true">→</span></button>
+        </div></article>`).join("");
+    }
+  }
+
+  function selectFeature(id) {
+    const person = byId(id);
+    const buttons = featureStage.querySelectorAll("[data-feature]");
+    if (featureStage.querySelector(`[data-feature="${id}"]`).getAttribute("aria-pressed") === "true") return;
+    featureCut?.progress(1);
+    const art = featureStage.querySelector(".feature-art");
+    const name = featureStage.querySelector(".feature-name");
+    const position = imagePosition(person, 1);
+    featureStage.querySelector(".feature-genre").textContent = person.label;
+    name.href = `${person.id}.html`;
+    name.firstChild.textContent = person.name + " ";
+    buttons.forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.feature === id)));
+    if (!window.gsap || motion.matches) {
+      art.style.cssText = position;
+      return;
+    }
+    const incoming = art.cloneNode(false);
+    incoming.style.cssText = position;
+    art.after(incoming);
+    featureCut = gsap.fromTo(incoming,
+      { clipPath: "polygon(0 0, 0 0, 0 100%, 0 100%)", scale: 1.07 },
+      {
+        clipPath: "polygon(0 0, 100% 0, 100% 100%, 0 100%)", scale: 1, duration: .55, ease: "power3.inOut",
+        onComplete: () => {
+          art.style.cssText = position;
+          incoming.remove();
+          featureCut = null;
+        },
+      });
   }
 
   function animate(element, vars) {
@@ -107,7 +175,7 @@
     const body = dialog.querySelector(".dialog-body");
     body.innerHTML = content;
     if (!dialog.open) dialog.showModal();
-    animate(body, { y: 13, opacity: 0, duration: .22 });
+    animate(body, { ...(dialog === cartDialog && innerWidth > 520 ? { x: 16 } : { y: 13 }), opacity: 0, duration: .24 });
   }
 
   function selectPhoto(index) {
@@ -145,7 +213,11 @@
           </label>`).join("")}
         </fieldset>
         <label class="field">Когда по сценарию<select name="slot">${Object.entries(slots).map(([key, title]) => `<option value="${key}">${title}</option>`).join("")}</select></label>
-        <div class="confirm"><span class="total">Итого <output id="total"></output></span><button class="button button-berry" type="submit">Забронировать</button></div>
+        <div class="confirm"><span class="total">Итого <output id="total"></output></span>
+          <div class="bag-actions"><button class="button button-outline" type="submit">Сразу забронировать</button>
+          <button class="button button-berry" type="button" id="add-to-cart">В корзину</button></div>
+        </div>
+        <p id="add-feedback" class="add-feedback" role="status" hidden></p>
       </form>`);
     updatePrice();
   }
@@ -157,6 +229,62 @@
       order.querySelector(`[data-rate="${scenario.id}"]`).textContent = points(rate + scenario.extra);
     }
     order.querySelector("#total").value = points(rate + scenarioById(data.get("scenario")).extra);
+  }
+
+  function bookingValues() {
+    const data = new FormData(order.querySelector("#booking"));
+    return { character: data.get("character"), scenario: data.get("scenario"), slot: data.get("slot") };
+  }
+
+  function priceFor(item) {
+    return byId(item.character).rate + scenarioById(item.scenario).extra;
+  }
+
+  function showCart() {
+    const body = cartDialog.querySelector(".dialog-body");
+    const items = cart.map((item, index) => `<li>
+      <div><strong>${scenarioById(item.scenario).title}</strong><p>${byId(item.character).name} · ${slots[item.slot]}</p></div>
+      <b>${points(priceFor(item))}</b>
+      <button type="button" data-remove-cart="${index}" aria-label="Убрать ${scenarioById(item.scenario).title}">Убрать</button></li>`);
+    const content = `${header("cart-title", "Корзина")}
+      ${items.length ? `<ul class="cart-list">${items.join("")}</ul><div class="cart-confirm">
+        <p class="total">Итого <span>${points(cart.reduce((sum, item) => sum + priceFor(item), 0))}</span></p>
+        <p class="dialog-description">Игровые брони сохранятся в «Моих заказах».</p>
+        <button type="button" class="button button-berry" id="checkout">Оформить заказ</button></div>`
+        : `<p class="dialog-description">Корзина пуста. Добавьте сценарий, чтобы собрать заказ.</p>
+          <a class="button button-berry" href="scenarios.html">К сценариям</a>`}`;
+    if (cartDialog.open) body.innerHTML = content;
+    else openDialog(cartDialog, content);
+  }
+
+  function addToCart() {
+    if (cart.length >= 12) {
+      const feedback = order.querySelector("#add-feedback");
+      feedback.hidden = false;
+      feedback.textContent = "В корзине уже 12 сценариев. Оформите заказ или уберите лишние.";
+      return;
+    }
+    cart.push(bookingValues());
+    save();
+    order.close();
+    showCart();
+    announcement.textContent = "Сценарий добавлен в корзину";
+  }
+
+  function finishCheckout() {
+    if (!cart.length) return;
+    const amount = cart.reduce((sum, item) => sum + priceFor(item), 0);
+    orders.unshift(...cart);
+    orders.length = Math.min(20, orders.length);
+    cart = [];
+    save();
+    renderOrders();
+    openDialog(cartDialog, `${header("cart-title", "Заказ оформлен")}
+      <div class="success-mark" aria-hidden="true">♥</div>
+      <p class="dialog-description">Сценарии сохранены в истории. Итог ${points(amount)}.</p>
+      <a href="orders.html" class="button button-berry" id="cart-orders">Мои заказы</a>`);
+    cartDialog.querySelector("#cart-orders").focus();
+    announcement.textContent = "Игровой заказ сохранён";
   }
 
   function renderOrders() {
@@ -219,6 +347,18 @@
         updateHeart(control);
         animate(control, { scale: .84, duration: .16 });
       }
+    } else if (control.dataset.feature) selectFeature(control.dataset.feature);
+    else if (control.classList.contains("open-cart")) showCart();
+    else if (control.id === "add-to-cart") addToCart();
+    else if (control.id === "checkout") finishCheckout();
+    else if (control.hasAttribute("data-remove-cart")) {
+      const index = Number(control.dataset.removeCart);
+      cart.splice(index, 1);
+      save();
+      showCart();
+      const next = cartDialog.querySelectorAll("[data-remove-cart]")[Math.min(index, cart.length - 1)];
+      (next || cartDialog.querySelector(".icon-button")).focus();
+      announcement.textContent = "Сценарий убран из корзины";
     } else if (control.dataset.gallery) showGallery(byId(control.dataset.gallery));
     else if (control.dataset.photo) selectPhoto(Number(control.dataset.photo));
     else if (control.id === "use-photo") {
@@ -245,7 +385,7 @@
       renderCards();
     }
   });
-  for (const dialog of [gallery, order]) dialog.addEventListener("click", (event) => {
+  for (const dialog of [gallery, order, cartDialog]) dialog.addEventListener("click", (event) => {
     if (event.target === dialog) dialog.close();
   });
   search?.addEventListener("input", renderCards);
@@ -253,31 +393,59 @@
   order.addEventListener("submit", (event) => {
     if (event.target.id !== "booking") return;
     event.preventDefault();
-    const data = new FormData(event.target);
-    const character = byId(data.get("character"));
-    const scenario = scenarioById(data.get("scenario"));
-    const slot = data.get("slot");
-    orders.unshift({ character: character.id, scenario: scenario.id, slot });
+    const item = bookingValues();
+    const character = byId(item.character);
+    const scenario = scenarioById(item.scenario);
+    orders.unshift(item);
     orders.length = Math.min(20, orders.length);
     save();
+    renderOrders();
     openDialog(order, `${header("order-title", "Встреча в сценарии")}
       <div class="success-mark" aria-hidden="true">♥</div>
-      <p class="dialog-description"><strong>${character.name}</strong><br>${scenario.title} · ${slots[slot]}<br>${points(character.rate + scenario.extra)}</p>
+      <p class="dialog-description"><strong>${character.name}</strong><br>${scenario.title} · ${slots[item.slot]}<br>${points(priceFor(item))}</p>
       <a href="orders.html" class="button button-berry" id="show-orders">Мои заказы</a>`);
     order.querySelector("#show-orders").focus();
     announcement.textContent = "Игровой заказ сохранён";
   });
   renderCards();
+  renderProducts();
   renderPagePrices();
   renderOrders();
   if (profile) {
     updateCover(profile, photos[profile.id]);
     document.querySelectorAll("[data-favorite]").forEach(updateHeart);
   }
-  save();
+  updateCounts();
+  const refresh = () => {
+    load();
+    renderCards();
+    renderOrders();
+    updateCounts();
+    if (profile) {
+      updateCover(profile, photos[profile.id]);
+      document.querySelectorAll("[data-favorite]").forEach(updateHeart);
+    }
+  };
+  window.addEventListener("pageshow", ({ persisted }) => { if (persisted) refresh(); });
+  window.addEventListener("storage", (event) => { if (event.key === storageKey) refresh(); });
   if (window.gsap && !motion.matches && document.querySelector(".hero")) {
     gsap.timeline({ defaults: { ease: "power3.out", clearProps: "transform,opacity" } })
-      .from(".hero .eyebrow, .hero h1", { y: 25, opacity: 0, stagger: .13, duration: .73 })
-      .from(".hero-copy p:not(.eyebrow), .hero .button", { y: 12, opacity: 0, stagger: .09, duration: .53 }, "-=.38");
+      .from(".feature-art", { scale: 1.13, duration: 1 }, 0)
+      .from(".hero .eyebrow, .hero h1", { y: 25, opacity: .46, stagger: .1, duration: .68 }, .04)
+      .from(".hero-copy p:not(.eyebrow), .hero-actions", { y: 10, opacity: .72, stagger: .08, duration: .43 }, .31);
+    if (window.ScrollTrigger) {
+      gsap.registerPlugin(ScrollTrigger);
+      const responsiveMotion = gsap.matchMedia();
+      responsiveMotion.add("(min-width: 641px) and (prefers-reduced-motion: no-preference)", () => {
+        gsap.to(".feature-picture", { scale: 1.16, yPercent: 6, ease: "none",
+          scrollTrigger: { trigger: ".hero", start: "top top", end: "bottom top", scrub: .5 } });
+      });
+      responsiveMotion.add("(prefers-reduced-motion: no-preference)", () => {
+        ScrollTrigger.batch("[data-reveal], .product", {
+          start: "top 94%", once: true,
+          onEnter: (elements) => gsap.from(elements, { y: 16, opacity: .36, stagger: .06, duration: .4, clearProps: "transform,opacity" }),
+        });
+      });
+    }
   }
 })();
